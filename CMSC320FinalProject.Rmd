@@ -1,0 +1,190 @@
+---
+title: "Final CMSC320 Project"
+output: html_document
+---
+
+
+### Welcome to our tutorial
+Written by Sam Jalowicz and Nick Kibbey
+
+# Part 0: Purpose
+
+### What is this project?
+This tutorial is written to walk you through the typical data science pipeline.
+
+### Who is this written for?
+You! Or anybody interested in data science. This tutorial is written for a beginner level. 
+
+### Requirements
+Novice coding experience helps and we assume you have been able to use R and have an editor you are comfortable with. This project is written in R 3.6.0, RMarkdown using RStudio 1.1.463. 
+
+
+We will be making use of tidyverse among other packages and if you do not yet know what tidyverse is I personally recommend you to get aquainted with it at https://www.rdocumentation.org/packages/tidyverse/versions/1.2.1
+
+### What will you be doing?
+We're not sure
+
+# Part 1
+
+### Setup
+We are using tidyverse and when it loads there will probably be warnings and other confusing information that may pop up but there is nothing to worry about if the proceeding code works fine.
+
+```{r setup1, include=FALSE}
+library(tidyverse)
+```
+```{r setup2, eval=FALSE}
+library(tidyverse)
+```
+
+### Download the data 
+Download from https://wri-public-data.s3.amazonaws.com/ImpactHack/Refugees.zip
+and unzip this folder, I left mine in my downloads but if you put the "aslyum_by_country_origin2.csv" in the same folder as your R file then you won't need the prefix that I used for the my_refugee_addr variable.
+
+This data will include all the countries the U.S. state department cares to include in their dataset and the amount of refugees from that country by year from 2000 - 2017.
+
+```{r getRefugees}
+# CHANGE HERE to where you downloaded your file
+my_refugee_addr <- "../Downloads/Refugees/aslyum_by_country_origin2.csv"
+# Variable that stores the data
+refugee_tab <- read_csv(my_refugee_addr)
+# Displaying a preview of the data stored in our R program
+refugee_tab
+```
+
+
+### Data Management
+
+Our objective is to be able to make a graph that has time on the X axis and number of refugees on the Y axis but that is difficult with our current data because the year is an attribute and not a value. Our data is too wide and we want it more skinny so that the specific year is a value we can plot and to do that across 17 years we will have 17 entries for each country instead of 1 country with 17 attributes relating to that year's refugees. 
+
+##### TL;DR, We need to modify our table if we want to graph over time
+
+#### How are we doing that?
+By ysing my lazy script to write the R code that creates 17 temp variables that will be merged into one data frame. The whole R code for this task is in the original markdown and the lazy script I used to help me is aptly named lazy.sh.
+
+What you see in the next snippet is the basic gist of what was repeated 17 times with minor adjustments.
+
+```{r dataMod1, include=FALSE}
+# Please forgive me because this is about to get tedious and R is a functional language
+# Which means without macros the pipeline I chose is not the best but it will work
+# Again I am sorry but sometimes data science makes you do mundane parsing 
+# You also learn that the smarter way takes longer to do so the stupid way is used more often
+temp2000 <- refugee_tab %>%
+select(name, yr_2000) %>%
+mutate(num_refugees=yr_2000, year=2000)
+temp2000$yr_2000 <- NULL
+
+temp2001 <- refugee_tab %>%
+select(name, yr_2001) %>%
+mutate(num_refugees=yr_2001, year=2001)
+temp2001$yr_2001 <- NULL
+
+temp2002 <- refugee_tab %>%
+select(name, yr_2002) %>%
+mutate(num_refugees=yr_2002, year=2002)
+temp2002$yr_2002 <- NULL
+
+temp2003 <- refugee_tab %>%
+select(name, yr_2003) %>%
+mutate(num_refugees=yr_2003, year=2003)
+temp2003$yr_2003 <- NULL
+
+temp2004 <- refugee_tab %>%
+select(name, yr_2004) %>%
+mutate(num_refugees=yr_2004, year=2004)
+temp2004$yr_2004 <- NULL
+
+temp2005 <- refugee_tab %>%
+select(name, yr_2005) %>%
+mutate(num_refugees=yr_2005, year=2005)
+temp2005$yr_2005 <- NULL
+
+temp2006 <- refugee_tab %>%
+select(name, yr_2006) %>%
+mutate(num_refugees=yr_2006, year=2006)
+temp2006$yr_2006 <- NULL
+
+temp2007 <- refugee_tab %>%
+select(name, yr_2007) %>%
+mutate(num_refugees=yr_2007, year=2007)
+temp2007$yr_2007 <- NULL
+
+temp2008 <- refugee_tab %>%
+select(name, yr_2008) %>%
+mutate(num_refugees=yr_2008, year=2008)
+temp2008$yr_2008 <- NULL
+
+temp2009 <- refugee_tab %>%
+select(name, yr_2009) %>%
+mutate(num_refugees=yr_2009, year=2009)
+temp2009$yr_2009 <- NULL
+
+temp2010 <- refugee_tab %>%
+select(name, yr_2010) %>%
+mutate(num_refugees=yr_2010, year=2010)
+temp2010$yr_2010 <- NULL
+
+temp2011 <- refugee_tab %>%
+select(name, yr_2011) %>%
+mutate(num_refugees=yr_2011, year=2011)
+temp2011$yr_2011 <- NULL
+
+temp2012 <- refugee_tab %>%
+select(name, yr_2012) %>%
+mutate(num_refugees=yr_2012, year=2012)
+temp2012$yr_2012 <- NULL
+
+temp2013 <- refugee_tab %>%
+select(name, yr_2013) %>%
+mutate(num_refugees=yr_2013, year=2013)
+temp2013$yr_2013 <- NULL
+
+temp2014 <- refugee_tab %>%
+select(name, yr_2014) %>%
+mutate(num_refugees=yr_2014, year=2014)
+temp2014$yr_2014 <- NULL
+
+temp2015 <- refugee_tab %>%
+select(name, yr_2015) %>%
+mutate(num_refugees=yr_2015, year=2015)
+temp2015$yr_2015 <- NULL
+
+temp2016 <- refugee_tab %>%
+select(name, yr_2016) %>%
+mutate(num_refugees=yr_2016, year=2016)
+temp2016$yr_2016 <- NULL
+
+temp2017 <- refugee_tab %>%
+select(name, yr_2017) %>%
+mutate(num_refugees=yr_2017, year=2017)
+temp2017$yr_2017 <- NULL
+```
+
+
+```{r dataMod2, eval=FALSE}
+# Please forgive me because this is about to get tedious and R is a functional language
+# Which means without macros the pipeline I chose is not the best but it will work
+# Again I am sorry but sometimes data science makes you do mundane parsing 
+# You also learn that the smarter way takes longer to do so the stupid way is used more often
+temp2000 <- refugee_tab %>%
+  select(name, yr_2000) %>%
+  mutate(num_refugees=yr_2000, year=2000)
+temp2000$yr_2000 <- NULL
+
+```
+
+This is the code that will bind all our temp variables together into one tall data frame.
+
+```{r dataMod3}
+refugee_df <- bind_rows(temp2017, temp2016, temp2015, temp2014, temp2013, temp2012, temp2011,
+                        temp2010, temp2009, temp2008, temp2007, temp2006, temp2005, temp2004,
+                        temp2003, temp2002, temp2001, temp2000)
+refugee_df
+```
+
+Now isn't that better?
+
+# Part 2: Exploratory data analysis
+
+fun trend lines go here...
+
+
