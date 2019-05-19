@@ -44,7 +44,7 @@ This data will include all the countries the U.S. state department cares to incl
 
 ```{r getRefugees}
 # CHANGE HERE to where you downloaded your file
-my_refugee_addr <- "../Downloads/Refugees/aslyum_by_country_origin2.csv"
+my_refugee_addr <- "/Users/sjalowicz/Desktop/Refugees/aslyum_by_country_origin2.csv"
 # Variable that stores the data
 refugee_tab <- read_csv(my_refugee_addr)
 # Displaying a preview of the data stored in our R program
@@ -186,5 +186,98 @@ Now isn't that better?
 # Part 2: Exploratory data analysis
 
 fun trend lines go here...
+
+```{r echo=TRUE}
+library(tidyverse)
+library(dplyr)
+
+refugee_df %>%
+  group_by(year) %>%
+  ggplot(mapping=aes(x=year, y=num_refugees)) +
+    geom_point() + labs(title="Number of Total Refugees Per Country Over Time",
+          x="Year", y="Number of Refugees")
+```
+
+
+```{r echo=TRUE}
+refugee_df %>%
+  filter(name == "Angola") %>%
+  ggplot(mapping=aes(x=year, y=num_refugees)) +
+    geom_smooth(method=lm) +
+    geom_point() + labs(title="Number of Refugees in Angola Over Time",
+          x="Year", y="Number of Refugees")
+```
+
+```{r echo=TRUE}
+library(tidyverse)
+library(nycflights13)
+
+refugee_df %>%
+  filter(name == "Angola") %>%
+  mutate(cut_yearID = cut(x=year,breaks=4)) %>%
+  group_by(cut_yearID, name) %>%
+  rowid_to_column() %>%
+  ggplot(mapping=aes(x=year, y=num_refugees)) +  
+    facet_wrap(~cut_yearID) +
+    geom_point() +
+    geom_smooth(method=lm)
+```
+
+```{r echo=TRUE}
+refugee_df %>%
+  filter(name == "Syria") %>%
+  ggplot(mapping=aes(x=year, y=num_refugees)) +
+    geom_smooth(method=lm) +
+    geom_point() + labs(title="Number of Refugees in Syria Over Time",
+          x="Year", y="Number of Refugees")
+```
+
+```{r echo=TRUE}
+library(tidyverse)
+library(nycflights13)
+
+refugee_df %>%
+  filter(name == "Syria") %>%
+  mutate(cut_yearID = cut(x=year,breaks=4)) %>%
+  group_by(cut_yearID, name) %>%
+  rowid_to_column() %>%
+  ggplot(mapping=aes(x=year, y=num_refugees)) +  
+    facet_wrap(~cut_yearID) +
+    geom_point() +
+    geom_smooth(method=lm)
+```
+
+```{r echo=TRUE}
+refugee_df %>%
+  filter(name == "Brunei") %>%
+  ggplot(mapping=aes(x=year, y=num_refugees)) +
+    geom_smooth(method=lm) +
+    geom_point() + labs(title="Number of Refugees in Brunei Over Time",
+          x="Year", y="Number of Refugees")
+```
+
+```{r echo=TRUE}
+library(tidyverse)
+library(nycflights13)
+
+refugee_df %>%
+  filter(name == "Brunei") %>%
+  mutate(cut_yearID = cut(x=year,breaks=4)) %>%
+  group_by(cut_yearID, name) %>%
+  rowid_to_column() %>%
+  ggplot(mapping=aes(x=year, y=num_refugees)) +  
+    facet_wrap(~cut_yearID) +
+    geom_point() +
+    geom_smooth(method=lm)
+```
+
+```{r echo=TRUE}
+refugee_df %>%
+  filter(name == "Angola" | name == "Syria" | name == "Brunei") %>%
+  ggplot(mapping=aes(x=year, y=num_refugees, color=name)) +
+    geom_smooth(method=lm) +
+    geom_point() + labs(title="Number of Refugees in Select Countries Over Time",
+          x="Year", y="Number of Refugees")
+```
 
 
