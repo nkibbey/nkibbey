@@ -44,7 +44,9 @@ This data will include all the countries the U.S. state department cares to incl
 
 ```{r getRefugees}
 # CHANGE HERE to where you downloaded your file
-my_refugee_addr <- "/Users/sjalowicz/Desktop/Refugees/aslyum_by_country_origin2.csv"
+# my_refugee_addr <- "/Users/sjalowicz/Desktop/Refugees/aslyum_by_country_origin2.csv"
+my_refugee_addr <- "Refugees/aslyum_by_country_origin2.csv"
+
 # Variable that stores the data
 refugee_tab <- read_csv(my_refugee_addr)
 # Displaying a preview of the data stored in our R program
@@ -210,7 +212,7 @@ refugee_df %>%
 
 ```{r echo=TRUE}
 library(tidyverse)
-library(nycflights13)
+# library(nycflights13)
 
 refugee_df %>%
   filter(name == "Angola") %>%
@@ -234,7 +236,7 @@ refugee_df %>%
 
 ```{r echo=TRUE}
 library(tidyverse)
-library(nycflights13)
+#library(nycflights13)
 
 refugee_df %>%
   filter(name == "Syria") %>%
@@ -258,7 +260,7 @@ refugee_df %>%
 
 ```{r echo=TRUE}
 library(tidyverse)
-library(nycflights13)
+#library(nycflights13)
 
 refugee_df %>%
   filter(name == "Brunei") %>%
