@@ -183,6 +183,19 @@ refugee_df <- bind_rows(temp2017, temp2016, temp2015, temp2014, temp2013, temp20
 refugee_df
 ```
 
+```{r echo=TRUE}
+population_df <- read_csv("/Users/sjalowicz/Desktop/World Population.csv")
+population_df$population <- as.numeric(gsub(",","",population_df$population))
+population_df <- population_df %>%
+  group_by(year) %>%
+  select(year, population) %>%
+  type_convert(cols(year = col_integer())) %>%
+  type_convert(cols(population = col_double())) %>%
+  filter(year >= 2000, year <= 2017)
+population_df
+```
+
+
 Now isn't that better?
 
 # Part 2: Exploratory data analysis
@@ -193,14 +206,27 @@ fun trend lines go here...
 library(tidyverse)
 library(dplyr)
 
-refugee_df %>%
+ref_totals <- refugee_df %>%
   group_by(year) %>%
   select(year, num_refugees) %>%
-  summarize(total=sum(num_refugees, na.rm = TRUE)) %>%
+  summarize(total=sum(num_refugees, na.rm = TRUE))
+
+
+ref_totals %>%
   ggplot(mapping=aes(x=year, y=total)) +
     geom_smooth(method=lm) +
     geom_point() + labs(title="Number of Total Refugees Over Time",
           x="Year", y="Number of Refugees")
+
+```
+
+```{r echo=TRUE}
+population_df %>%
+  filter(year >= 2000,year <= 2017) %>%
+  ggplot(mapping=aes(x=year, y=population)) +
+    geom_smooth(method=lm) +
+    geom_point() + labs(title="Total World Population Over Time",
+          x="Year", y="Population")
 ```
 
 
@@ -284,5 +310,35 @@ refugee_df %>%
     geom_point() + labs(title="Number of Refugees in Select Countries Over Time",
           x="Year", y="Number of Refugees")
 ```
+
+# Part 3: Hypothesis Testing and Machine Learning
+Hypothesis: World refugee rates and world population growth are proportional.
+
+```{r echo=TRUE}
+ref_lm <- lm(year~total, data=ref_totals)
+summary(ref_lm)
+```
+
+```{r echo=TRUE}
+coef(ref_lm)
+```
+
+```{r echo=TRUE}
+pop_lm <- lm(year~population, data=population_df)
+summary(pop_lm)
+```
+
+```{r echo=TRUE}
+coef(pop_lm)
+```
+
+```{r echo=TRUE}
+anova(ref_lm,pop_lm)
+```
+
+
+
+
+
 
 
