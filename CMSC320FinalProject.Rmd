@@ -195,8 +195,11 @@ library(dplyr)
 
 refugee_df %>%
   group_by(year) %>%
-  ggplot(mapping=aes(x=year, y=num_refugees)) +
-    geom_point() + labs(title="Number of Total Refugees Per Country Over Time",
+  select(year, num_refugees) %>%
+  summarize(total=sum(num_refugees, na.rm = TRUE)) %>%
+  ggplot(mapping=aes(x=year, y=total)) +
+    geom_smooth(method=lm) +
+    geom_point() + labs(title="Number of Total Refugees Over Time",
           x="Year", y="Number of Refugees")
 ```
 
