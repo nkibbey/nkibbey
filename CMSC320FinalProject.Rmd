@@ -202,6 +202,18 @@ Now isn't that better?
 
 fun trend lines go here...
 
+```{r chloroplast}
+library(rworldmap)
+refugees2010 <- refugee_df %>%
+  filter(year==2010) 
+  
+  
+ref_map <- joinCountryData2Map(refugees2010, joinCode = "NAME", nameJoinColumn = "name")
+
+#plot the map
+mapCountryData(ref_map, nameColumnToPlot='num_refugees') 
+```
+
 ```{r echo=TRUE}
 library(tidyverse)
 library(dplyr)
