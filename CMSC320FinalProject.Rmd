@@ -61,7 +61,7 @@ Our objective is to be able to make a graph that has time on the X axis and numb
 ##### TL;DR, We need to modify our table if we want to graph over time
 
 #### How are we doing that?
-By ysing my lazy script to write the R code that creates 17 temp variables that will be merged into one data frame. The whole R code for this task is in the original markdown and the lazy script I used to help me is aptly named lazy.sh.
+By using my lazy script to write the R code that creates 17 temp variables that will be merged into one data frame. The whole R code for this task is in the original markdown and the lazy script I used to help me is aptly named lazy.sh.
 
 What you see in the next snippet is the basic gist of what was repeated 17 times with minor adjustments.
 
@@ -183,6 +183,8 @@ refugee_df <- bind_rows(temp2017, temp2016, temp2015, temp2014, temp2013, temp20
 refugee_df
 ```
 
+Now we will load in our population set. We only care about the year and population columns, so we remove the rest. These columns are initially set to chr attributes, so in order to work with them later on, we need to convert them. We type convert the year column to an integer, and we type convert the population column to a double. In order to convert the population column, we must first remove the commas from the numbers. Now we filter the data so that it includes only information from 2000-2017, as that is what our refugee data is looking at.
+
 ```{r echo=TRUE}
 population_df <- read_csv("/Users/sjalowicz/Desktop/World Population.csv")
 population_df$population <- as.numeric(gsub(",","",population_df$population))
@@ -200,7 +202,9 @@ Now isn't that better?
 
 # Part 2: Exploratory data analysis
 
-fun trend lines go here...
+In order to get a better sense of the data we're working with, we perform exploratory data analysis. We try to manipulate the data to see if there are trends that we can work with, or see if there any correlations we can identify.
+
+Here we decided to create a map of refugee data around the world, to get a better picture of the distribution of refugee populations. The areas in yellow have lower numbers of refugees, while the areas in orange have more, and red has the highest. We did this by utilizing the rworldmap library. From this map you can see areas of interest in 2010, and can try to research what was going on in specific countries in 2010 that may have led to these statistics.
 
 ```{r chloroplast}
 library(rworldmap)
@@ -213,6 +217,8 @@ ref_map <- joinCountryData2Map(refugees2010, joinCode = "NAME", nameJoinColumn =
 #plot the map
 mapCountryData(ref_map, nameColumnToPlot='num_refugees') 
 ```
+
+From here we wanted to see if there was a realtionship between time and the total number of refugees. We summed up the number of refugees in each country based on the year, and created a new dataframe that contained this information. We did not want to overwrite the original data frame, as we will use this again later on. We then plotted the number of refugees over time, and added a regression line in order to see the general trend over time.
 
 ```{r echo=TRUE}
 library(tidyverse)
@@ -232,6 +238,8 @@ ref_totals %>%
 
 ```
 
+We also wanteed to see if there was a correlation between world population and time. We plotted the total population for each year, and added a regression line to this graph as well. As you can see here, this data appears to be more consistent over time than the refugee data that we just plotted.
+
 ```{r echo=TRUE}
 population_df %>%
   filter(year >= 2000,year <= 2017) %>%
@@ -241,6 +249,7 @@ population_df %>%
           x="Year", y="Population")
 ```
 
+We also want to explore trends in individual countries over time. From looking at the initial data, we saw a decrease in Angola refugees, and wanted to explore that. We plotted the data, and added a regression line.
 
 ```{r echo=TRUE}
 refugee_df %>%
@@ -251,9 +260,12 @@ refugee_df %>%
           x="Year", y="Number of Refugees")
 ```
 
+We chose to go a step further and break it down into four distinct time periods. This can be useful when trying to figure out the underlying causes in the refugee decrease. You can see the steepest decrease in the 2000-2004 time period, which may be due to the fact that id when Angolas 30 year civil war was coming to an end, and the Angolan govenment began assisting those that were displaced.
+
+Source: https://www.unhcr.org/en-us/news/latest/2007/3/4607b7d24/repatriation-angola-officially-ends-410000-refugees-home.html
+
 ```{r echo=TRUE}
 library(tidyverse)
-# library(nycflights13)
 
 refugee_df %>%
   filter(name == "Angola") %>%
@@ -266,6 +278,8 @@ refugee_df %>%
     geom_smooth(method=lm)
 ```
 
+From here we wanted to look at a country that saw an increase in refugees, and try to figure out why this may be the case. We chose to plot the data for Syria and added a regression line.
+
 ```{r echo=TRUE}
 refugee_df %>%
   filter(name == "Syria") %>%
@@ -275,6 +289,10 @@ refugee_df %>%
           x="Year", y="Number of Refugees")
 ```
 
+We broke this one down into four parts as well, and the results did not disappoint. You can see relatively consistent numbers in the first two graphs, which contain data from 2000-2008. In the third one you can see that in 2012 there was a steep jump in the number of refugees, which gives that regression line a greater slope. In the fourth graph you see a steady increase over the years, which is why the initial graph above shows an increase in the number of refugees in Syria over time. Upon further research, 2011/2012 is when the Syrian Civil War began. As with the Angola data, we are starting to see a pattern. It's starting to look like many of these refugees can be attributed to times of civil war and distress in individual countries. 
+
+Source: https://www.worldvision.org/refugees-news-stories/syrian-refugee-crisis-facts
+
 ```{r echo=TRUE}
 library(tidyverse)
 #library(nycflights13)
@@ -290,33 +308,11 @@ refugee_df %>%
     geom_smooth(method=lm)
 ```
 
-```{r echo=TRUE}
-refugee_df %>%
-  filter(name == "Brunei") %>%
-  ggplot(mapping=aes(x=year, y=num_refugees)) +
-    geom_smooth(method=lm) +
-    geom_point() + labs(title="Number of Refugees in Brunei Over Time",
-          x="Year", y="Number of Refugees")
-```
-
-```{r echo=TRUE}
-library(tidyverse)
-#library(nycflights13)
-
-refugee_df %>%
-  filter(name == "Brunei") %>%
-  mutate(cut_yearID = cut(x=year,breaks=4)) %>%
-  group_by(cut_yearID, name) %>%
-  rowid_to_column() %>%
-  ggplot(mapping=aes(x=year, y=num_refugees)) +  
-    facet_wrap(~cut_yearID) +
-    geom_point() +
-    geom_smooth(method=lm)
-```
+In order to put it in perspective, we wanted to plot the trends on the same graph. While Angola may look like it has a steep decrease on its own, it looks relatively consistet on a larger scale when compared to the increase in Syrian refugees.
 
 ```{r echo=TRUE}
 refugee_df %>%
-  filter(name == "Angola" | name == "Syria" | name == "Brunei") %>%
+  filter(name == "Angola" | name == "Syria") %>%
   ggplot(mapping=aes(x=year, y=num_refugees, color=name)) +
     geom_smooth(method=lm) +
     geom_point() + labs(title="Number of Refugees in Select Countries Over Time",
@@ -324,7 +320,16 @@ refugee_df %>%
 ```
 
 # Part 3: Hypothesis Testing and Machine Learning
-Hypothesis: World refugee rates and world population growth are proportional.
+
+In order to figure out how "good" our data is, we perform hypothesis testing. We create a hypothesis and perform different tests to see how confident our results are. You can either reject the hypothesis or not reject the hypothesis. In our case we are going to compare the total refugee population with the total world population. 
+
+Our Hypothesis: World refugee rates and world population growth are proportional.
+
+We will use linear regression to get a sense of the linear relationship between time and refugee population, and a sense of the linear relationship between time and total world population.
+
+We will then use anova to compare the two relationships, and see if one rate is increasing faster than the other, thus proving our hypothesis wrong.
+
+First we use lm to analyze the refugee data.
 
 ```{r echo=TRUE}
 ref_lm <- lm(year~total, data=ref_totals)
@@ -335,6 +340,8 @@ summary(ref_lm)
 coef(ref_lm)
 ```
 
+Next we use lm to get the total population data.
+
 ```{r echo=TRUE}
 pop_lm <- lm(year~population, data=population_df)
 summary(pop_lm)
@@ -344,11 +351,13 @@ summary(pop_lm)
 coef(pop_lm)
 ```
 
+We use anova to compare the two data sets.
+
 ```{r echo=TRUE}
 anova(ref_lm,pop_lm)
 ```
 
-
+From here we can conclude that
 
 
 
