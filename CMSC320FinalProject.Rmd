@@ -357,7 +357,7 @@ We use anova to compare the two data sets.
 anova(ref_lm,pop_lm)
 ```
 
-From here we can conclude that
+From here we can conclude that the total refugee population is increasing at a greater rate (3.074632e-07) than the total population rate (1.246577e-08), which means our hypothesis is proved wrong, as we predicted they would be proportional. As we hinted at before, this can be attributed to many underlying factors going on within a country. In the case of Angola and Syria specifically, the respective countries civil wars played a huge role in refugee population variation. The total population apears to be steadily increasing over time, and does not seem to be reliant on individual countries and events that are taking place.
 
 
 
