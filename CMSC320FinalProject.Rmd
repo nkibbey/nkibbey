@@ -13,44 +13,50 @@ Written by Sam Jalowicz and Nick Kibbey
 This tutorial is written to walk you through the typical data science pipeline.
 
 ### Who is this written for?
-You! Or anybody interested in data science. This tutorial is written for a beginner level. 
+You! Or anybody interested in data science. This tutorial is written for a beginner level in R. 
 
 ### Requirements
-Novice coding experience helps and we assume you have been able to use R and have an editor you are comfortable with. This project is written in R 3.6.0, RMarkdown using RStudio 1.1.463. 
+Novice coding experience helps and we assume you have been able to use R and have an editor you are comfortable with. Certain statistical concepts may be intimidating if you don't have any background but you'll be fine and can consult the googles. This project is written in R 3.6.0, RMarkdown using RStudio 1.1.463. 
 
 
-We will be making use of tidyverse among other packages and if you do not yet know what tidyverse is I personally recommend you to get aquainted with it at https://www.rdocumentation.org/packages/tidyverse/versions/1.2.1
+We will be making use of tidyverse and rworldmap and if you do not yet know what tidyverse is I personally recommend you to get aquainted with it at https://www.rdocumentation.org/packages/tidyverse/versions/1.2.1
+
+Rworldmap is used for choropleths (not to be confused with chloroplasts) which is the fancy name for those maps that have geographical boundaries and their assigned color corresponds to some informational attribute. 
+
+Info on this package is surprisingly well articulated at https://cran.r-project.org/web/packages/rworldmap/vignettes/rworldmapFAQ.pdf 
+
 
 ### What will you be doing?
-We're not sure
+You will be investigating a dataset about number of refugees by year and country of origin.
 
 # Part 1
 
 ### Setup
-We are using tidyverse and when it loads there will probably be warnings and other confusing information that may pop up but there is nothing to worry about if the proceeding code works fine.
+We are using tidyverse and rworldmap when it loads there will probably be warnings and other confusing information that may pop up but there is nothing to worry about if the proceeding code works fine.
 
 ```{r setup1, include=FALSE}
 library(tidyverse)
+library(rworldmap)
 ```
 ```{r setup2, eval=FALSE}
 library(tidyverse)
+library(rworldmap)
 ```
 
-### Download the data 
-Download from https://wri-public-data.s3.amazonaws.com/ImpactHack/Refugees.zip
-and unzip this folder, I left mine in my downloads but if you put the "aslyum_by_country_origin2.csv" in the same folder as your R file then you won't need the prefix that I used for the my_refugee_addr variable.
+### Git the data 
+__We__ __have__ __provided__ **the** **data** in with this git repo but the original zip is provided by the US state department as a zip folder https://wri-public-data.s3.amazonaws.com/ImpactHack/Refugees.zip
 
 This data will include all the countries the U.S. state department cares to include in their dataset and the amount of refugees from that country by year from 2000 - 2017.
 
 ```{r getRefugees}
-# CHANGE HERE to where you downloaded your file
-# my_refugee_addr <- "/Users/sjalowicz/Desktop/Refugees/aslyum_by_country_origin2.csv"
-my_refugee_addr <- "Refugees/aslyum_by_country_origin2.csv"
+# CHANGE HERE to if your file is somewhere else
+my_refugee_addr <- "Data/aslyum_by_country_origin2.csv"
 
 # Variable that stores the data
 refugee_tab <- read_csv(my_refugee_addr)
+
 # Displaying a preview of the data stored in our R program
-refugee_tab
+as_tibble(refugee_tab)
 ```
 
 
@@ -66,9 +72,8 @@ By using my lazy script to write the R code that creates 17 temp variables that 
 What you see in the next snippet is the basic gist of what was repeated 17 times with minor adjustments.
 
 ```{r dataMod1, include=FALSE}
-# Please forgive me because this is about to get tedious and R is a functional language
-# Which means without macros the pipeline I chose is not the best but it will work
-# Again I am sorry but sometimes data science makes you do mundane parsing 
+# Please forgive me but I'm not the one who made a table with 21 attributes when 3 would suffice
+# Again I am sorry but sometimes data science makes you do silly parsing 
 # You also learn that the smarter way takes longer to do so the stupid way is used more often
 temp2000 <- refugee_tab %>%
 select(name, yr_2000) %>%
@@ -163,9 +168,8 @@ temp2017$yr_2017 <- NULL
 
 
 ```{r dataMod2, eval=FALSE}
-# Please forgive me because this is about to get tedious and R is a functional language
-# Which means without macros the pipeline I chose is not the best but it will work
-# Again I am sorry but sometimes data science makes you do mundane parsing 
+# Please forgive me but I'm not the one who made a table with 21 attributes when 3 would suffice
+# Again I am sorry but sometimes data science makes you do silly parsing 
 # You also learn that the smarter way takes longer to do so the stupid way is used more often
 temp2000 <- refugee_tab %>%
   select(name, yr_2000) %>%
@@ -180,21 +184,54 @@ This is the code that will bind all our temp variables together into one tall da
 refugee_df <- bind_rows(temp2017, temp2016, temp2015, temp2014, temp2013, temp2012, temp2011,
                         temp2010, temp2009, temp2008, temp2007, temp2006, temp2005, temp2004,
                         temp2003, temp2002, temp2001, temp2000)
-refugee_df
+as_tibble(refugee_df)
+
 ```
 
-Now we will load in our population set. We only care about the year and population columns, so we remove the rest. These columns are initially set to chr attributes, so in order to work with them later on, we need to convert them. We type convert the year column to an integer, and we type convert the population column to a double. In order to convert the population column, we must first remove the commas from the numbers. Now we filter the data so that it includes only information from 2000-2017, as that is what our refugee data is looking at.
+Now we will load in our population set. 
 
-```{r echo=TRUE}
-population_df <- read_csv("/Users/sjalowicz/Desktop/World Population.csv")
-population_df$population <- as.numeric(gsub(",","",population_df$population))
-population_df <- population_df %>%
+This is in the Data folder and originally sourced from https://www.kaggle.com/szakwani/worldpopulation/version/1
+
+We only care about the year and population columns, so we remove the rest. These columns are initially set to chr attributes, so in order to work with them later on, we need to convert them. We convert population and year into numerics. This will work out fine if you use our provided csv but the original kaggle kernel has a copyright symbol in the final row that unfortunately makes the type conversion upset when you knit to html but works in console (you may also remove it through regex if manual isn't your style).
+
+```{r pop}
+population_df <- read_csv("Data/worldPop.csv") # read data
+
+# clear out the unnecessary attributes
+population_df$`average annual` <- NULL
+population_df$`average annual_1` <- NULL
+
+# convert population, year into numerics 
+# (gsub regex makes 1,699,224 into 1699224 for better conversion)
+population_df$population <- as.numeric(gsub(",","", population_df$population))
+population_df$year <- as.numeric(population_df$year)
+
+# extract years 2000 - 2017 matching our refugee dataset
+population_df <- population_df %>% 
   group_by(year) %>%
   select(year, population) %>%
-  type_convert(cols(year = col_integer())) %>%
-  type_convert(cols(population = col_double())) %>%
   filter(year >= 2000, year <= 2017)
-population_df
+
+as_tibble(population_df)
+```
+
+
+Now we are going to go a step forward to make a new dataframe that has both world totals of both population and refugees, as well as handy column that gives us the percent of world population of refugees.
+
+```{r world}
+# data frame that has yearly sums of refugees
+ref_totals <- refugee_df %>%
+  group_by(year) %>%
+  select(year, num_refugees) %>%
+  summarize(num_refugees=sum(num_refugees, na.rm = TRUE)) 
+
+# data frame that has years sums of our additional info
+world_totals <- ref_totals %>%
+  left_join(population_df) %>%
+  mutate(ref_portion=(num_refugees/population))
+
+as_tibble(world_totals)
+
 ```
 
 
@@ -204,43 +241,38 @@ Now isn't that better?
 
 In order to get a better sense of the data we're working with, we perform exploratory data analysis. We try to manipulate the data to see if there are trends that we can work with, or see if there any correlations we can identify.
 
-Here we decided to create a map of refugee data around the world, to get a better picture of the distribution of refugee populations. The areas in yellow have lower numbers of refugees, while the areas in orange have more, and red has the highest. We did this by utilizing the rworldmap library. From this map you can see areas of interest in 2010, and can try to research what was going on in specific countries in 2010 that may have led to these statistics.
+Here we are creating a map of refugee data around the world, to get a better picture of the distribution of refugee populations. The areas in yellow have lower numbers of refugees, while the areas in orange have more, and red has the highest. We did this by utilizing the rworldmap library. From this map you can see areas of interest in 2010, and can try to research what was going on in specific countries in 2010 that may have led to these statistics.
 
 ```{r chloroplast}
-library(rworldmap)
+# 2010 chosen as an arbitrary year to demonstrate choropleth
 refugees2010 <- refugee_df %>%
   filter(year==2010) 
   
-  
+# library from rworldmap matches our names to the library with associated data
 ref_map <- joinCountryData2Map(refugees2010, joinCode = "NAME", nameJoinColumn = "name")
 
-#plot the map
-mapCountryData(ref_map, nameColumnToPlot='num_refugees') 
+# plot the map
+mapParams <- mapCountryData(ref_map, nameColumnToPlot='num_refugees')
 ```
 
-From here we wanted to see if there was a realtionship between time and the total number of refugees. We summed up the number of refugees in each country based on the year, and created a new dataframe that contained this information. We did not want to overwrite the original data frame, as we will use this again later on. We then plotted the number of refugees over time, and added a regression line in order to see the general trend over time.
+Here we are exploring if there was a realtionship between time and the total number of refugees. We are using the dataframe we created in the first section to help us do this. We are plotting refugees over time, and using a regression line in order to see the general trend over time.
 
-```{r echo=TRUE}
-library(tidyverse)
-library(dplyr)
-
-ref_totals <- refugee_df %>%
-  group_by(year) %>%
-  select(year, num_refugees) %>%
-  summarize(total=sum(num_refugees, na.rm = TRUE))
-
+```{r totalRefGraph}
 
 ref_totals %>%
-  ggplot(mapping=aes(x=year, y=total)) +
+  ggplot(mapping=aes(x=year, y=num_refugees)) +
     geom_smooth(method=lm) +
     geom_point() + labs(title="Number of Total Refugees Over Time",
           x="Year", y="Number of Refugees")
 
 ```
 
-We also wanteed to see if there was a correlation between world population and time. We plotted the total population for each year, and added a regression line to this graph as well. As you can see here, this data appears to be more consistent over time than the refugee data that we just plotted.
+To get a bit of perspective we are plotting the world population growth to compare.
 
-```{r echo=TRUE}
+
+We are plotting the total population for each year, and a regression line to this graph as well. As you can see here, this data appears to be more consistent over time than the refugee data that we just plotted.
+
+```{r explore2}
 population_df %>%
   filter(year >= 2000,year <= 2017) %>%
   ggplot(mapping=aes(x=year, y=population)) +
@@ -249,9 +281,23 @@ population_df %>%
           x="Year", y="Population")
 ```
 
-We also want to explore trends in individual countries over time. From looking at the initial data, we saw a decrease in Angola refugees, and wanted to explore that. We plotted the data, and added a regression line.
+Both world population and refugee totals seem to be growing so the relative percentages are also important to view in order to find any interesting relationships. 
 
-```{r echo=TRUE}
+```{r portionRefGraph}
+world_totals %>%
+  ggplot(mapping=aes(x=year, y=ref_portion)) +
+    geom_smooth(method=lm) +
+    geom_point() + labs(title="Portion of world population refugees over time ",
+          x="Year", y="Percent of World's population as Refugees")
+```
+
+From the first 2 graphs we could see numbers were increasing but with this additional graph it definitely appears that the relative portion seems to be increasing which is an intuition we'll want to test later on.
+
+***
+
+We also want to explore trends in individual countries over time. From looking at the initial data, we saw a decrease in Angola refugees, and wanted to explore that. We are plotting the data, and adding a regression line.
+
+```{r angola}
 refugee_df %>%
   filter(name == "Angola") %>%
   ggplot(mapping=aes(x=year, y=num_refugees)) +
@@ -260,13 +306,11 @@ refugee_df %>%
           x="Year", y="Number of Refugees")
 ```
 
-We chose to go a step further and break it down into four distinct time periods. This can be useful when trying to figure out the underlying causes in the refugee decrease. You can see the steepest decrease in the 2000-2004 time period, which may be due to the fact that id when Angolas 30 year civil war was coming to an end, and the Angolan govenment began assisting those that were displaced.
+We are going a step further and breaking it down into four distinct time periods. This can be useful when trying to figure out the underlying causes in the refugee decrease. You can see the steepest decrease in the 2000-2004 time period, which may be due to the fact that it was when Angolas 30 year civil war was coming to an end, and the Angolan govenment began assisting those that were displaced.
 
 Source: https://www.unhcr.org/en-us/news/latest/2007/3/4607b7d24/repatriation-angola-officially-ends-410000-refugees-home.html
 
-```{r echo=TRUE}
-library(tidyverse)
-
+```{r angola2}
 refugee_df %>%
   filter(name == "Angola") %>%
   mutate(cut_yearID = cut(x=year,breaks=4)) %>%
@@ -278,9 +322,9 @@ refugee_df %>%
     geom_smooth(method=lm)
 ```
 
-From here we wanted to look at a country that saw an increase in refugees, and try to figure out why this may be the case. We chose to plot the data for Syria and added a regression line.
+From here we want to look at a country that saw an increase in refugees, and try to figure out why this may be the case. This example plots the data for Syria with a regression line.
 
-```{r echo=TRUE}
+```{r syria}
 refugee_df %>%
   filter(name == "Syria") %>%
   ggplot(mapping=aes(x=year, y=num_refugees)) +
@@ -289,14 +333,11 @@ refugee_df %>%
           x="Year", y="Number of Refugees")
 ```
 
-We broke this one down into four parts as well, and the results did not disappoint. You can see relatively consistent numbers in the first two graphs, which contain data from 2000-2008. In the third one you can see that in 2012 there was a steep jump in the number of refugees, which gives that regression line a greater slope. In the fourth graph you see a steady increase over the years, which is why the initial graph above shows an increase in the number of refugees in Syria over time. Upon further research, 2011/2012 is when the Syrian Civil War began. As with the Angola data, we are starting to see a pattern. It's starting to look like many of these refugees can be attributed to times of civil war and distress in individual countries. 
+We are breaking this one down into four parts as well, and the results did not disappoint. You can see relatively consistent numbers in the first two graphs, which contain data from 2000-2008. In the third one you can see that in 2012 there was a steep jump in the number of refugees, which gives that regression line a greater slope. In the fourth graph you see a steady increase over the years, which is why the initial graph above shows an increase in the number of refugees in Syria over time. Upon further research, 2011/2012 is when the Syrian Civil War began. As with the Angola data, we are starting to see a pattern. It's starting to look like many of these refugees can be attributed to times of civil war and distress in individual countries. 
 
 Source: https://www.worldvision.org/refugees-news-stories/syrian-refugee-crisis-facts
 
-```{r echo=TRUE}
-library(tidyverse)
-#library(nycflights13)
-
+```{r syria2}
 refugee_df %>%
   filter(name == "Syria") %>%
   mutate(cut_yearID = cut(x=year,breaks=4)) %>%
@@ -308,9 +349,9 @@ refugee_df %>%
     geom_smooth(method=lm)
 ```
 
-In order to put it in perspective, we wanted to plot the trends on the same graph. While Angola may look like it has a steep decrease on its own, it looks relatively consistet on a larger scale when compared to the increase in Syrian refugees.
+In order to put it in perspective, we are plotting the trends on the same graph. While Angola may look like it has a steep decrease on its own, it looks relatively consistet on a larger scale when compared to the increase in Syrian refugees.
 
-```{r echo=TRUE}
+```{r explore4}
 refugee_df %>%
   filter(name == "Angola" | name == "Syria") %>%
   ggplot(mapping=aes(x=year, y=num_refugees, color=name)) +
@@ -321,45 +362,131 @@ refugee_df %>%
 
 # Part 3: Hypothesis Testing and Machine Learning
 
-In order to figure out how "good" our data is, we perform hypothesis testing. We create a hypothesis and perform different tests to see how confident our results are. You can either reject the hypothesis or not reject the hypothesis. In our case we are going to compare the total refugee population with the total world population. 
+In order to figure out how "good" our intuitions are, we perform hypothesis testing. We create a hypothesis and perform different tests to see how confident our results are. You can either reject the null hypothesis or fail to reject the null hypothesis. We want to examine the rate of growth of refugees.
 
-Our Hypothesis: World refugee rates and world population growth are proportional.
+Our Hypothesis: Refugee populations are growing at a faster rate than the world population
 
-We will use linear regression to get a sense of the linear relationship between time and refugee population, and a sense of the linear relationship between time and total world population.
+***
 
-We will then use anova to compare the two relationships, and see if one rate is increasing faster than the other, thus proving our hypothesis wrong.
+To start off we will find out from year to year what the rate of refugees/year is growing or shrinking.
 
-First we use lm to analyze the refugee data.
+We will use linear regression to get a sense of the linear relationship between time and refugee population.
 
-```{r echo=TRUE}
-ref_lm <- lm(year~total, data=ref_totals)
+First we use the cor() function to get an indication if number of refugees is dependent on year with 1 being completely positivly dependent, -1 being inversely, and 0 indicating no correlation.
+
+```{r correlation1}
+# look to see if there appears to be a correlation
+cor(ref_totals$year, ref_totals$num_refugees)
+```
+
+0.93 is a definite correlation between the two and now we move on to making or linear regression model with the lm function to analyze the annual change in number of refugees. The summary function was included to show a larger array of stats but for our purposes the tidy values are all we need and a lot more readable.
+
+
+```{r hypothesis1}
+
+# creating a linear model for our total refugees/year data
+ref_lm <- lm(num_refugees~year, data=ref_totals)
+
+# see a full summary
 summary(ref_lm)
+
+# more human readable format
+ref_values <- ref_lm %>%  
+  broom::tidy()
+ref_values
+
 ```
 
-```{r echo=TRUE}
-coef(ref_lm)
+
+This means from 2000-2017 we estimate that there is an increase of 2,822,673 refugees per year. We can trust this statistic because our p value (1.94e-08) < 0.05, which means we are confident that this estimate didn't occur by coincidence. In statistical terms we reject the null hypothesis that there is no relationship between the year and total refugees within our dataset because our p value was less than our alpha value of 0.05 which is the standard.
+
+
+2,822,673 more refugees per year is a big number but there are a lot of people in the world so it is hard to make sense of this statistic.
+
+That is why we included that whole thing about the world population so that we could see if the relative distribution if people who are refugees in the world is also increasing...
+
+So now we will start testing to see if the portion of the world's refugee population is growing faster than world's overall population growth.
+
+```{r hypothesis2}
+
+# creating a linear model for our total refugees/year data
+world_lm <- lm(ref_portion~year, data=world_totals)
+world_values <- world_lm %>%  
+  broom::tidy()
+world_values
+
 ```
 
-Next we use lm to get the total population data.
+This shows us that our thinking was correct. There is an approximate 0.035% increase in the portion of the world's population that are refugees, which means that refugee growth is outpacing world population growth. Looking at our estimate, this margin of difference is small, but still significant as our p value is < 0.05, and considering that the refugee proportion of the world in 2017 (its highest in our dataset) was 0.9% this increase does matter. Comparing numbers of different magnitudes like 7 billion people and 2.8 million more refugees per year is a difficult interpretation, so looking at percents help put this number in perspective.
 
-```{r echo=TRUE}
-pop_lm <- lm(year~population, data=population_df)
-summary(pop_lm)
+***
+
+### Predicting Linear Regression Model
+
+Now normally in data science we also are looking to test that the linear regression model we built would be good if we introduced new data sets to predict the error we might expect. This may seem odd for this dataset because without getting too philosphical, in theory there is an absolute number for the amount of people alive in 2000 and the amout of refugees as there is one earth with humans living on it in 2000 so why would we predict error for variation that don't exist. It's a good point but good data scientists are thorough and skeptical and its perfectly reasonable a scenario exists that the reporting of this data from dataset to dataset could be different for a number of reasons from countries poorly communicating with the U.S. state department to human error.
+
+##### TL;DR data scientists are thorough so we are going to predict how good our model is
+
+We are using 80:20 rule, which is a popular standard, to set out 20% of our dataset and train a model on the other 80%. We see how well the model performs and can look at the error for our predictions based on our model.
+
+```{r predict}
+
+# setting seed
+set.seed(1234)  
+# row indices for training data
+trainingRowIndex <- sample(1:nrow(world_totals), 0.8*nrow(world_totals))  
+trainingData <- world_totals[trainingRowIndex, ]  # model training data
+testData  <- world_totals[-trainingRowIndex, ]   # test data
+
 ```
 
-```{r echo=TRUE}
-coef(pop_lm)
+so now we got ourselves training and test data so it is time to build a model and look at our error.
+
+```{r predict2}
+
+
+lm_mod_total <- lm(num_refugees ~ year, data=trainingData)  # build the model
+ref_pred <- predict(lm_mod_total, testData)  # predict 
+summary (lm_mod_total)  # model summary
+
 ```
 
-We use anova to compare the two data sets.
+Remember our full model estimate was 2.8 mil, while the model on 80% of the data is estimating 3.3 mil refugees/year and the p value is also < 0.05. This all makes sense that our new model within range of sensible expectation and it's good to do these type of sanity checks throughout the data science pipeline.
 
-```{r echo=TRUE}
-anova(ref_lm,pop_lm)
+Now we are binding our prediction data and our actual data values and seeing if we indeed have a strong correlation.
+
+```{r errors}
+actual_p <- data.frame(cbind(actuals=testData$num_refugees, predicteds=ref_pred))  
+cor(actual_p)  # find correlation between actual values and those predicted
+actual_p # display data for you
+
 ```
 
-From here we can conclude that the total refugee population is increasing at a greater rate (3.074632e-07) than the total population rate (1.246577e-08), which means our hypothesis is proved wrong, as we predicted they would be proportional. As we hinted at before, this can be attributed to many underlying factors going on within a country. In the case of Angola and Syria specifically, the respective countries civil wars played a huge role in refugee population variation. The total population apears to be steadily increasing over time, and does not seem to be reliant on individual countries and events that are taking place.
 
 
+And just for comparison in one code block we are also going to look at that world porportion statistic.
 
 
+```{r predicting}
 
+# setting seed
+set.seed(1234)  
+
+lm_mod_portion <- lm(ref_portion ~ year, data=trainingData)  # build the model
+portion_pred <- predict(lm_mod_portion, testData)  # predict 
+summary(lm_mod_portion)  # model summary
+
+
+actual_p2 <- data.frame(cbind(actuals=testData$ref_portion, predicteds=portion_pred))  
+cor(actual_p2)  # find correlation between actual values and those predicted
+actual_p2 # display data for you
+```
+
+
+From both of these models we have learned to have a bit of trust when it concerns some of the analysis that was done. We also learned a depressing fact that despite having no major world war type of scenarios we are seeing a greater increase in our population being refugees. 
+
+Another dataset that we were thinking about using is kindly available at https://www.acleddata.com/data/ and they also have a lot of visualizations tools relating to by country conflict data. This is a really cool dataset but we wanted to test something like whats the correlation of conflicts/country and refugees/country but it seemed a bit obvious since conflict would be a criterion to be officially seen as a refugee.
+
+The whole repository is available at https://github.com/nkibbey/nkibbey.github.io
+
+I hope you enjoyed our tutorial.
